@@ -19,14 +19,14 @@ class CarMonitor:
     STATION_POINT = [WINDOW_X / 2, 1000]
     INVALID_DEGREE = 360
     INVALID_DISTANCE = -1
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     
     def __init__(self, back_color_hsv):
         logger().debug('CarMonitor init() start')
         self._back_color_hsv = back_color_hsv
         logger().debug('CarMonitor init() end')
     
-    def get_car_dests(self, save_img=False):
+    def get_car_dests(self, save_img=False, path='img'):
         """
         
         calculate angle between car and station entrance
@@ -41,7 +41,7 @@ class CarMonitor:
         """
         readable, img = self._get_img()
         if save_img:
-            cv2.imwrite('img/result.png', img)
+            cv2.imwrite(path + '/result.png', img)
         hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv_img, np.array(self._back_color_hsv[0]), np.array(self._back_color_hsv[1]))
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -58,14 +58,14 @@ class CarMonitor:
                     cv2.fillConvexPoly(trim_mask, approx, color=(255, 255, 255))
         
         if save_img:
-            cv2.imwrite('img/trim_mask.png', trim_mask)
+            cv2.imwrite(path + '/trim_mask.png', trim_mask)
         bg_color = (255, 255, 255)
         bg_img = np.full_like(img, bg_color)
         trim_img = np.where(trim_mask == 255, img, bg_img)
     
-        marker_mask = cv2.inRange(trim_img, np.array([0, 0, 0]), np.array([120, 120, 120]))
+        marker_mask = cv2.inRange(trim_img, np.array([0, 0, 0]), np.array([255, 255, 100]))
         if save_img:
-            cv2.imwrite('img/marker_mask.png', marker_mask)
+            cv2.imwrite(path + '/marker_mask.png', marker_mask)
         marker_contours, _ = cv2.findContours(marker_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         m_convex_hull_list = []
         for contour in marker_contours:
@@ -100,7 +100,7 @@ class CarMonitor:
             distance = CarMonitor.INVALID_DISTANCE
         
         if save_img:
-            cv2.imwrite('img/result_mask.png', trim_img)
+            cv2.imwrite(path + '/result_mask.png', trim_img)
    
         return degree, distance
 

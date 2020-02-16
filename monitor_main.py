@@ -16,9 +16,9 @@ def get_message_dict(degree, distance, wait):
 def run():
     logger().info('run')
     # 黄色
-    car_monitor = CarMonitor([[20, 30, 0], [40, 255, 255]])
+    car_monitor = CarMonitor([[20, 10, 180], [50, 255, 255]])
     # 緑
-    car_monitor_2 = CarMonitor([[50, 64, 0], [90, 255, 255]])
+    car_monitor_2 = CarMonitor([[60, 50, 100], [100, 255, 255]])
     while(True):
     # for i in range(1):
         time.sleep(0.1)
