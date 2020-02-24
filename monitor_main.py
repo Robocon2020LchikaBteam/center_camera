@@ -18,10 +18,10 @@ def run():
     # 黄色
     car_monitor = CarMonitor([[20, 10, 180], [50, 255, 255]])
     # 緑
-    car_monitor_2 = CarMonitor([[60, 50, 100], [100, 255, 255]])
+    car_monitor_2 = CarMonitor([[60, 50, 90], [100, 255, 255]])
     while(True):
     # for i in range(1):
-        time.sleep(0.1)
+        #time.sleep(0.1)
         degree, distance = car_monitor.get_car_dests(False)
         degree_2, distance_2 = car_monitor_2.get_car_dests(False)
         logger().info('degree, distance: {}, {}'.format(degree, distance))

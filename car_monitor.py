@@ -9,14 +9,13 @@ class CarMonitor:
     
     Args:
         back_color_hsv (list): [[min], [max]] e.g. [[20,30,0], [40,255,255]]
-        camera_device_num (int): video capture device number
     
     """
     INVALID_DEGREE = 360
     DETECT_AREA_SIZE = 1000
     WINDOW_X = 2304
     WINDOW_Y = 1536
-    STATION_POINT = [WINDOW_X / 2, 1000]
+    STATION_POINT = [WINDOW_X / 2, 1200]
     INVALID_DEGREE = 360
     INVALID_DISTANCE = -1
     cap = cv2.VideoCapture(1)
@@ -33,6 +32,7 @@ class CarMonitor:
         
         Args:
             save_img (bool): True -> save intermediate picture as png file (debug function)
+            path (string): directory path to save image
             
         Returns:
             float: angle[degree]
@@ -41,7 +41,7 @@ class CarMonitor:
         """
         readable, img = self._get_img()
         if save_img:
-            cv2.imwrite(path + '/result.png', img)
+            cv2.imwrite(path + '/origin.png', img)
         hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv_img, np.array(self._back_color_hsv[0]), np.array(self._back_color_hsv[1]))
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -80,6 +80,8 @@ class CarMonitor:
                     cy = int(M['m01'] / M['m00'])
                     self._draw_marker(trim_img, cx, cy, (0, 0, 255))
 
+        p1 = [-1, -1]
+        p2 = [-1, -1]
         if len(m_convex_hull_list) > 1:
             m_convex_hull_list.sort(key=lambda x: x['moment']['m00'], reverse=True)
             p1 = [int(m_convex_hull_list[0]['moment']['m10'] / m_convex_hull_list[0]['moment']['m00']),
@@ -101,6 +103,15 @@ class CarMonitor:
         
         if save_img:
             cv2.imwrite(path + '/result_mask.png', trim_img)
+            self._draw_marker(img, CarMonitor.STATION_POINT[0], CarMonitor.STATION_POINT[1], (255, 0, 0))
+            if p1[0] != -1:
+                self._draw_marker(img, (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2, (255, 0, 0))
+                cv2.line(img, tuple(p1), tuple(p2), color=(0, 0, 255), thickness=2)
+                cv2.line(img, (int((p1[0] + p2[0]) / 2), int((p1[1] + p2[1]) / 2)),
+                    (int(CarMonitor.STATION_POINT[0]), int(CarMonitor.STATION_POINT[1])), color=(0, 255, 0), thickness=2)
+                cv2.putText(img, 'angle[deg]: ' + str(degree), (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), thickness=2)
+                cv2.putText(img, 'distance: ' + str(distance), (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), thickness=2)
+            cv2.imwrite(path + '/result.png', img)
    
         return degree, distance
 
@@ -114,11 +125,13 @@ class CarMonitor:
     # @param x 十字マーカーのx座標
     # @param y 十字マーカーのy座標
     # @param marker_color 十字マーカーの色
-    def _draw_marker(self, img, x, y, marker_color):
-        cv2.line(img, (x - 7, y), (x + 7, y), color=(255, 255, 255), thickness=2)
-        cv2.line(img, (x, y - 7), (x, y + 7), color=(255, 255, 255), thickness=2)
-        cv2.line(img, (x - 7, y), (x + 7, y), color=marker_color, thickness=1)
-        cv2.line(img, (x, y - 7), (x, y + 7), color=marker_color, thickness=1)
+    def _draw_marker(self, img, x, y, marker_color, size=10):
+        x = int(x)
+        y = int(y)
+        cv2.line(img, (x - size, y), (x + size, y), color=(255, 255, 255), thickness=4)
+        cv2.line(img, (x, y - size), (x, y + size), color=(255, 255, 255), thickness=4)
+        cv2.line(img, (x - size, y), (x + size, y), color=marker_color, thickness=2)
+        cv2.line(img, (x, y - size), (x, y + size), color=marker_color, thickness=2)
 
     # 無駄に半周以上しないように角度を調整
     def _compress_degree_in_180(self, degree, one_round_value):
